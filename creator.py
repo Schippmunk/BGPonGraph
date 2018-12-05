@@ -3,13 +3,14 @@ filename = 'bgp.pml'
 file_list = []
 
 # program vars
-n = 256
-# nodes are 0 to 3, 0 is target
-nodes = 4
-edges = ()
 
-def save_file() -> None:
+# the graph
+g = None
+
+# File output functions
+def create_pml_file() -> None:
     """Saves all the lines of file_list to the file filename"""
+
     content = "\n".join(file_list)
     with open(filename, 'w+') as the_file:
         the_file.write(content)
@@ -23,25 +24,49 @@ def app(lines) -> None:
     else:
         file_list = file_list + lines
 
-def preprocessor() -> None:
-    """Adds preprocessor cmds like define to the beginning of the list"""
 
-    app('#define n ' + str(n))
+class Graph:
+    # number of nodes in the graph, 1 is just t
+    nodes = 1
+    # adjacency matrix
+    ad_mat = [[0]]
 
-def create_channels() -> None:
-    for i in range(0..nodes):
-        app("chan t" + str(i) + " = [1] of {byte}")
+    def print():
+    # prints the graph pretty
+        pass
 
-def create_edges():
-    global edges
-    for i in range(nodes):
-        edges.append([i+1, i])
+    def __init__(self, number: int) -> Graph:
+        """Creates example Graph"""
+        if number == 0:
+            self.nodes = 1
+            self.ad_mat = [[1]]
+        elif number == 1:
+            self.nodes = 2
+            self.ad_mat = [[0,1], [1,0]]
+
+    def __init__(self) -> Graph:
+        """Creates a random Graph"""
+        pass
+
+# graph to pml
+def app_pml() -> None:
+    app_channels()
+
+def app_channels() -> None:
+    pass
+    #app("chan t" + str(i) + " = [1] of {byte}")
 
 
-def main():
-    create_edges()
-    preprocessor()
-    savefile()
+def main(arg: list = []) -> None:
+    global g
+    if len(arg) == 2
+        g = Graph(int(arg[1]))
+    else:
+        g = Graph()
+
+    app_pml()
+    create_pml_file()
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv)
