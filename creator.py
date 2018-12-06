@@ -88,8 +88,16 @@ def app_pml() -> None:
         app('')
 
 def app_channels() -> None:
-    pass
-    #app("chan t" + str(i) + " = [1] of {byte}")
+    for i in range(g.nodes):
+        for j in range(g.nodes):
+            edge = g.ad_mat[i][j]
+            if edge == 1:
+                if i != 0 and j == 0:
+                    # channel from ni to t
+                    app('chan t' + str(i-1) + ' = [1] of {byte}')
+                elif i != 0 and j != 0 and i != j:
+                    # channel cij
+                    app('chan c' + str(i-1) + str(j-1) + ' = 1 of {byte}')
 
 def app_t_proctype() -> None:
     app('active proctype t() {')
@@ -104,6 +112,8 @@ def app_n_proctype(number: int) -> None:
     app('}')
 
 
+
+# init
 def main(arg: list = []) -> None:
     global g
     print(arg)
