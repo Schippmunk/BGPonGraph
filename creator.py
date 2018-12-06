@@ -27,6 +27,7 @@ def app(lines) -> None:
 
 
 class Graph:
+    """The graph has the nodes 0...(nodes-1). 0 corresponds to t, 1 to n0, 2 to n1, etc"""
     # number of nodes in the graph, 1 is just t
     nodes = 1
     # adjacency matrix
@@ -34,7 +35,7 @@ class Graph:
 
     def print_graph(self):
         """prints the graph pretty"""
-        # requires
+        # requires graphviz, install using
         # python3.7 -m pip install graphviz
         from graphviz import Digraph
         dot = Digraph()
@@ -56,6 +57,14 @@ class Graph:
         elif number == 1:
             self.nodes = 2
             self.ad_mat = [[0,0], [1,0]]
+        elif number == 2:
+            # this was the standard model we discussed
+            self.nodes = 4
+            self.ad_mat = [[0,0,0,0],[1,0,1,0],[1,0,0,1],[1,1,0,0]]
+        elif number == 3:
+            # another example discussed in the lab
+            self.nodes = 3
+            self.ad_mat = [[0,0,0],[1,0,1], [1,1,0]]
         else:
             """Creates a random Graph"""
             import random
