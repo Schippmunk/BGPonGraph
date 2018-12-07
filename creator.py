@@ -69,10 +69,13 @@ class Graph:
             """Creates a random Graph"""
             import random
             self.nodes = random.randrange(1,6)
-            for i in range(0,self.nodes):
+            for i in range(self.nodes):
                 row = []
-                for j in range(0,self.nodes):
-                    row.append(random.randrange(2))
+                for j in range(self.nodes):
+                    if i != j and i != 0:
+                        row.append(random.randrange(2))
+                    else:
+                        row.append(0)
                 self.ad_mat.append(row)
 
         self.print_graph()
@@ -97,7 +100,7 @@ def app_channels() -> None:
                     app('chan t' + str(i-1) + ' = [1] of {byte}')
                 elif i != 0 and j != 0 and i != j:
                     # channel cij
-                    app('chan c' + str(i-1) + str(j-1) + ' = 1 of {byte}')
+                    app('chan c' + str(i-1) + str(j-1) + ' = [1] of {byte}')
 
 def app_t_proctype() -> None:
     app('active proctype t() {')
