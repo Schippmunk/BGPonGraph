@@ -69,7 +69,7 @@ active proctype n1() {
 	 od	 		
 }
 
-ltl p1 {[]e>0}
+ltl p1 {[]e<0}
 
 
 
