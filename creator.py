@@ -6,6 +6,10 @@ file_list = []
 
 # program vars
 
+# random graph vars
+max_nodes = 6
+min_nodes = 5
+
 # the graph
 g = None
 
@@ -98,7 +102,7 @@ class Graph:
             self.ad_mat = [[0,0,0],[1,0,1], [1,1,0]]
         else:
             # create a random graph
-            self.nodes = random.randrange(3,6)
+            self.nodes = random.randrange(min_nodes, max_nodes)
 
             # empty adjacency matrix
             self.ad_mat = [[0 for x in range(self.nodes)] for x in range(self.nodes)]
@@ -164,7 +168,7 @@ def app_channels() -> None:
         for j in range(g.nodes):
             edge = g.ad_mat[i][j]
             if edge == 1:
-                app(get_pml_chan_name(i,j) + ' = [1] of {byte}')
+                app('chan ' + get_pml_chan_name(i,j) + ' = [1] of {byte}')
 
 def app_t_proctype() -> None:
     app('active proctype t() {')
@@ -175,19 +179,19 @@ def app_t_proctype() -> None:
 def app_n_proctype(i: int) -> None:
     # TODO: make sure successors and predecessors are correct and don't need to be switched
     app('active proctype ' + get_pml_node_name(i) + '() {')
-    app(tab() + 'byte e0 = ' + str(g.max_cost))
+    app(tab() + 'byte e0 = max_cost')
     app(tab() + 'byte x = 0;')
     succ = g.get_successors(i)
     pred = g.get_predecessors(i)
     app(tab() + 'byte v[' + str(len(succ)) + '];')
     for j in range(len(succ)):
-        app(tab() + 'v[' + str(j) + '] = ' + str(g.max_cost) + ';')
+        app(tab() + 'v[' + str(j) + '] = max_cost;')
     app('')
 
     app(tab() + 'do')
     for j in range(len(succ)):
         app(tab(2) + ':: ' + get_pml_chan_name(i,succ[j]) + '?x;')
-        if succ[j] == 0:
+        if succ[j] != 0:
             app(tab(3) + 'if')
             app(tab(4) + ':: x > 0 -> x = x - 1')
             app(tab(3) + 'fi;')
@@ -198,7 +202,7 @@ def app_n_proctype(i: int) -> None:
         app(tab(6) + ':: x < e0 -> e0 = x;')
         for k in pred:
             if k != 0:
-                app(tab(7) + get_pml_chan_name(i,k) + '!e0;')
+                app(tab(7) + get_pml_chan_name(k,i) + '!e0;')
         app(tab(5) + 'fi')
         app(tab(3) + 'fi')
     app(tab() + 'od')
