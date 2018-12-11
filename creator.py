@@ -153,6 +153,9 @@ def app_pml() -> None:
     app_channels()
     app('')
 
+    app_ltl_spec()
+    app('')
+
     app_t_proctype()
     app('')
 
@@ -169,6 +172,20 @@ def app_channels() -> None:
             edge = g.ad_mat[i][j]
             if edge == 1:
                 app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {byte}')
+
+def app_ltl_spec() -> None:
+    """Specifies ltl property that eventually always all channels are empty"""
+    prefix = 'ltl converges {eventually always ('
+    infix = ''
+    for i in range(g.nodes):
+        for j in range(g.nodes):
+            edge = g.ad_mat[i][j]
+            if edge == 1:
+                infix = infix + '(len(' + get_pml_chan_name(j,i) + ') == 0) && '
+    if infix[-4:] == ' && ':
+        infix = infix[:len(infix) - 4]
+    suffix = ')}'
+    app(prefix + infix + suffix)
 
 def app_t_proctype() -> None:
     app('active proctype t() {')
