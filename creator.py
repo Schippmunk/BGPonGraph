@@ -121,7 +121,7 @@ class Graph:
             for j in range(self.nodes):
                 self.trans_ad_mat[j][i] = self.ad_mat[i][j]
 
-        self.print_graph()
+        self.print_graph(True, False)
         self.print_graph(True, False)
 
 # helpers
@@ -168,7 +168,7 @@ def app_channels() -> None:
         for j in range(g.nodes):
             edge = g.ad_mat[i][j]
             if edge == 1:
-                app('chan ' + get_pml_chan_name(i,j) + ' = [1] of {byte}')
+                app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {byte}')
 
 def app_t_proctype() -> None:
     app('active proctype t() {')
@@ -177,9 +177,9 @@ def app_t_proctype() -> None:
     app('}')
 
 def app_n_proctype(i: int) -> None:
-    # TODO: make sure successors and predecessors are correct and don't need to be switched
     app('active proctype ' + get_pml_node_name(i) + '() {')
-    app(tab() + 'byte e0 = max_cost')
+    var_e = 'e' + str(i-1)
+    app(tab() + 'byte ' + var_e + ' = max_cost;')
     app(tab() + 'byte x = 0;')
     succ = g.get_successors(i)
     pred = g.get_predecessors(i)
@@ -197,12 +197,12 @@ def app_n_proctype(i: int) -> None:
             app(tab(3) + 'fi;')
         app(tab(3) + 'if')
         array_element = 'v[' + str(j) + ']'
-        app(tab(4) + ':: x < ' + array_element + ' -> ' + array_element + ' = e0;')
+        app(tab(4) + ':: x < ' + array_element + ' -> ' + array_element + ' = ' + var_e + ';')
         app(tab(5) + 'if')
-        app(tab(6) + ':: x < e0 -> e0 = x;')
+        app(tab(6) + ':: x < ' + var_e + ' -> ' + var_e + ' = x;')
         for k in pred:
             if k != 0:
-                app(tab(7) + get_pml_chan_name(k,i) + '!e0;')
+                app(tab(7) + get_pml_chan_name(i,k) + '!' + var_e + ';')
         app(tab(5) + 'fi')
         app(tab(3) + 'fi')
     app(tab() + 'od')
