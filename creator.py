@@ -80,10 +80,10 @@ class Graph:
         for node in range(self.nodes):
             nodeContractTable = []
             for suc in self.get_successors(node):
-                listOfValues = list(range(8)) #assuming the costs are in Z8 for now....
+                listOfValues = list(range(self.max_cost)) #assuming the costs are in Z8 for now....
                 random.shuffle(listOfValues)
                 nodeContractTable.append(listOfValues)
-            contractTable.append(nodeContractTable) 
+            self.contract_table.append(nodeContractTable) 
 
 
     def print_graph(self, transpose: bool = False, view_img: bool = True) -> None:
@@ -148,7 +148,7 @@ class Graph:
         # generate a random contract table with values in Z8 (for now...)
         self.generate_random_contract_table()
 
-        self.print_graph(True, False)
+        self.print_graph(False, False)
         self.print_graph(True, False)
 
 # helpers
@@ -287,16 +287,16 @@ def app_n_proctype(i: int) -> None:
         if succ[j] != 0:
             # load the contract table between node i and succ[j]
             contractTable = g.get_contract_table(i,succ[j])
-            contractValues = 'byte conTableN' + str(i-1) + 'N' str(succ[j]-1)
+            contractValues = 'byte conTableN' + str(i-1) + 'N' + str(succ[j]-1)
             app(tab(2) + contractValues + '[' + str(len(contractTable)) +'];')
             for k in range(len(contractTable)):
                 app(tab(2) + contractValues + '[' + str(k) + '] = ' + str(contractTable[k]))
             
             #I'm not sure about this...
             app(tab(3) + 'if')
-            app(tab(4) + ':: ' + contractValues '[x] < cost[' + str(succ[j]-1) + '];')
+            app(tab(4) + ':: ' + contractValues +'[x] < cost[' + str(succ[j]-1) + '];')
             app(tab(4) + 'if')
-            app(tab(5) + 'path is valid -> cost[' + str(succ[j]-1) + '] = ' + contractValues '[x]') 
+            app(tab(5) + 'path is valid -> cost[' + str(succ[j]-1) + '] = ' + contractValues +'[x]') 
             app(tab(4) + 'fi')
             app(tab(3) + 'fi')
         app(tab(3) + 'if')
@@ -324,7 +324,7 @@ def app_get_minimum_proc(chanName, list: str) -> None:
     app(tab() + 'int ' + iterator + ';')
     app(tab() + 'for('+ iterator + ' in ' + list + '){')
     app(tab(2) + 'if')
-    app(tab(3) + ':: ' + minValue + ' >= ' + list + '[' + iterator +'] -> ' + minValue + ' = ' + list + '['  iterator '];')
+    app(tab(3) + ':: ' + minValue + ' >= ' + list + '[' + iterator +'] -> ' + minValue + ' = ' + list + '[' + iterator + '];')
     app(tab(2) + 'fi')
     app(tab() + '}')
 
