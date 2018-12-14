@@ -85,7 +85,7 @@ class Graph:
                 node_contract_table.append(list_of_values)
 
             self.contract_table.append(node_contract_table) 
-        print(self.contract_table)
+        #print(self.contract_table)
 
 
     def print_graph(self, transpose: bool = False, view_img: bool = True) -> None:
@@ -110,6 +110,22 @@ class Graph:
             dot.render('reverse_graph', view = view_img)
         else:
             dot.render('graph', view = view_img)
+
+    def write_graph_file(self, file_name, transposed: bool = False):
+        '''Writes the graph as a linked list into a file'''
+        file = open(file_name, "w+")
+        file.write("Graph\n")
+        for n in range(self.nodes):
+            file.write("%d ->" % n)
+            if transposed:
+                for p in self.get_predecessors(n):
+                    file.write(" %d" % p)
+            else:
+                for s in self.get_successors(n):
+                    file.write(" %d" % s)
+            file.write("\n")
+        file.close()
+
 
     def __init__(self, number: int):
         if number == 0:
@@ -150,8 +166,10 @@ class Graph:
         # generate a random contract table with values in Z8 (for now...)
         self.generate_random_contract_table()
 
-        self.print_graph(False, False)
-        self.print_graph(True, False)
+        #self.print_graph(False, False)  # Transposed = False, view = False
+        #self.print_graph(True, False)   # Transposed = True, view = False
+        self.write_graph_file('graph.txt') 
+        self.write_graph_file('graph_transposed.txt', True)
 
 # helpers
 def get_pml_node_name(i: int) -> str:
@@ -192,8 +210,8 @@ def app_pml() -> None:
     app('')
 
     for i in range(1, g.nodes):
-        app_n_proctype(i)
-        #app_n_proctype_dummyBGP(i)
+        #app_n_proctype(i)
+        app_n_proctype_dummyBGP(i)
         app('')
         
 def app_constants() -> None:
