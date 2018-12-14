@@ -66,10 +66,24 @@ class Graph:
 
     def get_contract_table(self, i: int, j: int) -> list:
         """Returns the contract table between nodes i and j, if there exists an edge from i to j"""
-        if self.exists_edge(i,j):
-            ret = self.contract_table[i][j-1]
-        else:
-            ret = []
+        if i == 0 and self.exists_edge(j, i): # if i is the target and there exists an edge between j and the target
+            targetPred = self.get_predecessors(0) #target's predecessors
+            for pos in range(len(targetPred)): # find its position among the target's predecessors
+                if j == targetPred[pos]:
+                    ret = [self.contract_table[i][pos]]
+                    print(ret)
+        elif i!= 0:
+            if self.exists_edge(i, j):
+                nodeSucc = self.get_successors(i) #successors of node i
+                decreasePos = (0 in nodeSucc) #if the target belongs to the successors of i, there is no contract table for it, so we need to decrease the j's position value
+                # find j's position among the successors of i
+                for pos in range(len(nodeSucc)):
+                    if j == nodeSucc[pos]: # j is the pos-th successor of i
+                        if decreasePos:
+                            pos -= 1
+                        ret = self.contract_table[i][pos]
+            else:
+                ret = []
         return ret
 
     def exists_edge(self, i: int, j: int) -> bool:
@@ -77,15 +91,22 @@ class Graph:
         return self.ad_mat[i][j]
 
     def generate_random_contract_table(self):
-        for node in range(self.nodes):
+        #target node
+        target_contract_table = []
+        for pred in self.get_predecessors(0):
+            v = random.choice(range(self.max_cost))
+            target_contract_table.append(v)
+        self.contract_table.append(target_contract_table)
+        for node in range(1, self.nodes):
             node_contract_table = []
             for suc in self.get_successors(node):
-                list_of_values = list(range(self.max_cost))
-                random.shuffle(list_of_values)
-                node_contract_table.append(list_of_values)
+                if suc != 0:
+                    list_of_values = list(range(self.max_cost))
+                    random.shuffle(list_of_values)
+                    node_contract_table.append(list_of_values)
 
             self.contract_table.append(node_contract_table) 
-        #print(self.contract_table)
+        print(self.contract_table)
 
 
     def print_graph(self, transpose: bool = False, view_img: bool = True) -> None:
@@ -163,7 +184,7 @@ class Graph:
             for j in range(self.nodes):
                 self.trans_ad_mat[j][i] = self.ad_mat[i][j]
 
-        # generate a random contract table with values in Z8 (for now...)
+        # generate a random contract table with values in Z_max_cost
         self.generate_random_contract_table()
 
         #self.print_graph(False, False)  # Transposed = False, view = False
@@ -210,8 +231,8 @@ def app_pml() -> None:
     app('')
 
     for i in range(1, g.nodes):
-        #app_n_proctype(i)
-        app_n_proctype_dummyBGP(i)
+        app_n_proctype(i)
+        #app_n_proctype_dummyBGP(i)
         app('')
         
 def app_constants() -> None:
