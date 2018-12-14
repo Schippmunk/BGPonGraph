@@ -70,8 +70,7 @@ class Graph:
             targetPred = self.get_predecessors(0) #target's predecessors
             for pos in range(len(targetPred)): # find its position among the target's predecessors
                 if j == targetPred[pos]:
-                    ret = [self.contract_table[i][pos]]
-                    print(ret)
+                    ret = self.contract_table[i][pos]
         elif i!= 0:
             if self.exists_edge(i, j):
                 nodeSucc = self.get_successors(i) #successors of node i
@@ -263,7 +262,9 @@ def app_ltl_spec() -> None:
 def app_t_proctype() -> None:
     app('active proctype t() {')
     for i in g.get_predecessors(0):
-        app(tab() + get_pml_chan_name(i) + '!' + str(random.randrange(1, g.max_cost + 1)) + ';') #why some random number?
+        value = g.get_contract_table(0, i)
+        app(tab() + get_pml_chan_name(i) + '!' + str(value) + ';') #why some random number?
+        #app(tab() + get_pml_chan_name(i) + '!' + str(random.randrange(1, g.max_cost + 1)) + ';') #why some random number?
     app('}')
 
 def app_n_proctype_dummyBGP(i: int) -> None:
