@@ -305,7 +305,7 @@ def app_n_proctype(i: int) -> None:
     app()
     app('do', 1)
     for j in range(len(succ)):
-        app('::  ' + get_pml_chan_name(i,succ[j]) + ' ? v, p;', 1)
+        app('::  ' + get_pml_chan_name(succ[j], i) + ' ? v, p;', 1)
         app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
         app('if', 2)
         app('::  (x < current_min);', 2)
