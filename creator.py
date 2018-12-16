@@ -314,26 +314,30 @@ def app_n_proctype(i: int) -> None:
     #I'm not sure this should be initialized as max_cost...
     # I think this could be done like this (which means setting each value of cost[] as max_cost):
     #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
-
+    app('')
     app(tab() + 'byte cost[' + str(len(succ)) + '];')
     for j in range(len(succ)):
         app(tab() + 'cost[' + str(j) + '] = max_cost;')
     app('')
+    
+    # load the contract table between node i and succ[j]
+    for j in range(len(succ)):
+        if succ[j] != 0:
+            contract_table = g.get_contract_table(i,succ[j])
+            contract_values = 'cont' + get_pml_node_name(i) + get_pml_node_name(succ[j])
+            app(tab() + 'byte ' + contract_values + '[' + str(len(contract_table)) +'];')
+            for k in range(len(contract_table)):
+                app(tab() + contract_values + '[' + str(k) + '] = ' + str(contract_table[k]))
 
+
+    app('')
     app(tab() + 'do')
     for j in range(len(succ)):
         array_element = 'cost[' + str(j) + ']'
         app(tab(2) + ':: ' + get_pml_chan_name(i,succ[j]) + '?x;') # sets x as the message written from the channel between i and its j-successor
         #app(tab(2) + 'if')        
         #app(tab(3) + ':: ' + array_element + ' > x -> ') 
-        if succ[j] != 0:
-            # load the contract table between node i and succ[j]
-            contract_table = g.get_contract_table(i,succ[j])
-            contract_values = 'conTable' + get_pml_node_name(i) + get_pml_node_name(succ[j])
-            app(tab(2) + 'byte' + contract_values + '[' + str(len(contract_table)) +'];')
-            for k in range(len(contract_table)):
-                app(tab(2) + contract_values + '[' + str(k) + '] = ' + str(contract_table[k]))
-            
+        if succ[j] != 0:            
             #I'm not sure about this...
             app(tab(3) + 'if')
             app(tab(4) + ':: ' + contract_values +'[x] < cost[' + str(succ[j]-1) + '];')
