@@ -23,13 +23,15 @@ def create_pml_file() -> None:
         the_file.write(content)
 
 
-def app(lines) -> None:
+def app(lines = '', tabs: int = 0) -> None:
     """lines is a string or an array of strings. This function appends it to the file_list"""
+    lines = tab(tabs) + lines
     global file_list
     if isinstance(lines, str):
         file_list.append(lines)
     else:
         file_list = file_list + lines
+    
     
 def tab(amount: int = 1) -> str:
     return '    ' * amount
@@ -218,24 +220,34 @@ def get_pml_chan_name(i: int, j: int = 0) -> str:
 def app_pml() -> None:
     """This function calls all the append to pml functions in correct order"""
     app_constants()
-    app('')
+    app()
+
+    app_path()
+    app()
 
     app_channels()
-    app('')
+    app()
 
     app_ltl_spec()
-    app('')
+    app()
 
     app_t_proctype()
-    app('')
+    app()
 
     for i in range(1, g.nodes):
         app_n_proctype(i)
         #app_n_proctype_dummyBGP(i)
-        app('')
+        app()
         
 def app_constants() -> None:
     app('#define max_cost ' + str(g.max_cost))
+
+def app_path() -> None:
+    app('typedef path {')
+    app(tab() + 'byte length = 0;')
+    num = g.nodes - 2
+    app(tab() + 'byte path[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}')
+    app('}')
 
 # add a channel for each edge
 def app_channels() -> None:
@@ -243,7 +255,7 @@ def app_channels() -> None:
         for j in range(g.nodes):
             edge = g.ad_mat[i][j]
             if edge == 1:
-                app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {byte}')
+                app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {byte, path}')
 
 def app_ltl_spec() -> None:
     """Specifies ltl property that eventually always all channels are empty"""
@@ -263,47 +275,60 @@ def app_t_proctype() -> None:
     app('active proctype t() {')
     for i in g.get_predecessors(0):
         value = g.get_contract_table(0, i)
-        app(tab() + get_pml_chan_name(i) + '!' + str(value) + ';') #why some random number?
-        #app(tab() + get_pml_chan_name(i) + '!' + str(random.randrange(1, g.max_cost + 1)) + ';') #why some random number?
+        path_name = 'p' + str(i-1)  
+        app('path ' + path_name + ';', 1)
+        app(get_pml_chan_name(i) + ' ! ' + str(value) + ', ' + path_name + ';', 1)
     app('}')
-
-def app_n_proctype_dummyBGP(i: int) -> None:
-    app('active proctype ' + get_pml_node_name(i) + '() {')
-    var_e = 'e' + str(i-1)
-    app(tab() + 'byte ' + var_e + ' = max_cost;')
-    app(tab() + 'byte x = 0;')
-    succ = g.get_successors(i)
-    pred = g.get_predecessors(i)
-    # I think this could be done like this: (which means setting each value of v[] as max_cost)
-    #app(tab() + 'byte v[' + str(len(succ)) + '] = max_cost;') 
-    app(tab() + 'byte v[' + str(len(succ)) + '];')
-    for j in range(len(succ)):
-        app(tab() + 'v[' + str(j) + '] = max_cost;')
-    app('')
-
-    app(tab() + 'do')
-    for j in range(len(succ)):
-        app(tab(2) + ':: ' + get_pml_chan_name(i,succ[j]) + '?x;')
-        if succ[j] != 0:
-            app(tab(3) + 'if')
-            app(tab(4) + ':: x > 0 -> x = x - 1')
-            app(tab(3) + 'fi;')
-        app(tab(3) + 'if')
-        array_element = 'v[' + str(j) + ']'
-        app(tab(4) + ':: x < ' + array_element + ' -> ' + array_element + ' = ' + var_e + ';')
-        app(tab(5) + 'if')
-        app(tab(6) + ':: x < ' + var_e + ' -> ' + var_e + ' = x;')
-        for k in pred:
-            if k != 0: # if k is not the target
-                app(tab(7) + get_pml_chan_name(i,k) + '!' + var_e + ';') # advertises its minimum cost
-        app(tab(5) + 'fi')
-        app(tab(3) + 'fi')
-    app(tab() + 'od')
-    app('}')
-
-
 
 def app_n_proctype(i: int) -> None:
+    app('active proctype ' + get_pml_node_name(i) + '() {')
+    app('byte current_min = max_cost;', 1)
+    app('byte x, v;', 1)
+    app('path p;', 1)
+    app('bool is_valid;', 1)
+
+    succ = g.get_successors(i) # list of successors
+    pred = g.get_predecessors(i) # list of predecessors
+    
+    #I'm not sure this should be initialized as max_cost...
+    # I think this could be done like this (which means setting each value of cost[] as max_cost):
+    #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
+    app('byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};', 1)
+    
+    # load the contract table between node i and succ[j]
+    for j in range(len(succ)):
+        table_name = 'cont_' + get_pml_node_name(succ[j])
+        contract_table = g.get_contract_table(i,succ[j])
+        contract_list = ', '.join(map(str, contract_table))
+        app('byte ' + table_name + '[max_cost] = {' + contract_list + '};', 1)
+
+    app()
+    app('do', 1)
+    for j in range(len(succ)):
+        app('::  ' + get_pml_chan_name(i,succ[j]) + ' ? v, p;', 1)
+        app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
+        app('if', 2)
+        app('::  (x < current_min);', 2)
+        if succ[j] != 0:
+            # TODO: update path
+            for k in succ:
+                if k != 0:
+                    app('if', 3)
+                    # TODO: replace true with that path is valid
+                    app('::  true;', 3)
+                    app(get_pml_chan_name(i, k) + ' ! x, p', 4)
+                    app('fi', 3)
+        app('current_min = x;', 3)
+        if succ[j] == 0:
+            for k in succ:
+                if k != 0:
+                    app(get_pml_chan_name(i,k) + ' ! x, p;', 3)
+        app('::  else -> true', 2)
+        app('fi', 2)
+    app('od', 1)
+    app('}')
+
+def app_n_proctype_old(i: int) -> None:
     app('active proctype ' + get_pml_node_name(i) + '() {')
     var_e = 'e' + str(i-1)
     app(tab() + 'byte ' + var_e + ' = max_cost;')
@@ -314,23 +339,18 @@ def app_n_proctype(i: int) -> None:
     #I'm not sure this should be initialized as max_cost...
     # I think this could be done like this (which means setting each value of cost[] as max_cost):
     #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
-    app('')
-    app(tab() + 'byte cost[' + str(len(succ)) + '];')
-    for j in range(len(succ)):
-        app(tab() + 'cost[' + str(j) + '] = max_cost;')
-    app('')
+    app(tab() + 'byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};')
     
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
         if succ[j] != 0:
+            table_name = 'cont' + get_pml_node_name(i) + get_pml_node_name(succ[j])
             contract_table = g.get_contract_table(i,succ[j])
-            contract_values = 'cont' + get_pml_node_name(i) + get_pml_node_name(succ[j])
-            app(tab() + 'byte ' + contract_values + '[' + str(len(contract_table)) +'];')
-            for k in range(len(contract_table)):
-                app(tab() + contract_values + '[' + str(k) + '] = ' + str(contract_table[k]))
+            contract_list = ', '.join(map(str, contract_table))
+            app(tab() + 'byte ' + table_name + '[max_cost] = {' + contract_list + '};')
+    contract_values = table_name
 
-
-    app('')
+    app()
     app(tab() + 'do')
     for j in range(len(succ)):
         array_element = 'cost[' + str(j) + ']'
