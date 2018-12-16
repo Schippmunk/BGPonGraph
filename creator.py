@@ -283,9 +283,11 @@ def app_t_proctype() -> None:
 def app_n_proctype(i: int) -> None:
     app('active proctype ' + get_pml_node_name(i) + '() {')
     app('byte current_min = max_cost;', 1)
+    # x is a variable used for computations
+    # v is the value retrieved from channels
     app('byte x, v;', 1)
+    # p is a variable of type path, also retreived from channels, modified and sent
     app('path p;', 1)
-    app('bool is_valid;', 1)
 
     succ = g.get_successors(i) # list of successors
     pred = g.get_predecessors(i) # list of predecessors
@@ -293,7 +295,7 @@ def app_n_proctype(i: int) -> None:
     #I'm not sure this should be initialized as max_cost...
     # I think this could be done like this (which means setting each value of cost[] as max_cost):
     #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
-    app('byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};', 1)
+    #app('byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};', 1)
     
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
@@ -309,8 +311,8 @@ def app_n_proctype(i: int) -> None:
         app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
         app('if', 2)
         app('::  (x < current_min);', 2)
+        # TODO: update path
         if succ[j] != 0:
-            # TODO: update path
             for k in succ:
                 if k != 0:
                     app('if', 3)
@@ -320,6 +322,7 @@ def app_n_proctype(i: int) -> None:
                     app('fi', 3)
         app('current_min = x;', 3)
         if succ[j] == 0:
+            # if succ[j] is t then the path will always be valid
             for k in succ:
                 if k != 0:
                     app(get_pml_chan_name(i,k) + ' ! x, p;', 3)
