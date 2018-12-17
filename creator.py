@@ -241,12 +241,13 @@ def app_pml() -> None:
         
 def app_constants() -> None:
     app('#define max_cost ' + str(g.max_cost))
+    app('#define num_nodes ' + str(g.nodes))
 
 def app_path() -> None:
     app('typedef path {')
     app(tab() + 'byte length = 0;')
     num = g.nodes - 2
-    app(tab() + 'byte path[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}')
+    app(tab() + 'byte nodes[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}')
     app('}')
 
 # add a channel for each edge
@@ -282,22 +283,21 @@ def app_t_proctype() -> None:
 
 def app_n_proctype(i: int) -> None:
     app('active proctype ' + get_pml_node_name(i) + '() {')
-    app('byte current_min = max_cost;', 1)
     # x is a variable used for computations
+    app('byte x;', 1)
     # v is the value retrieved from channels
-    app('byte x, v;', 1)
+    app('byte v;', 1)
     # p is a variable of type path, also retreived from channels, modified and sent
     app('path p;', 1)
+    # p_old is the previously selected path that works
+    #app('path p_old;', 1)
 
+    # the current minimum value this node has to offer to the other nodes
+    app('byte current_min = max_cost;', 1)
+    
     succ = g.get_successors(i) # list of successors
-    #pred = g.get_predecessors(i) # list of predecessors
     
-    #I'm not sure this should be initialized as max_cost...
-    # I think this could be done like this (which means setting each value of cost[] as max_cost):
-    #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
-    #app('byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};', 1)
-    
-    # TODO: EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
+    # EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
 
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
@@ -307,99 +307,31 @@ def app_n_proctype(i: int) -> None:
         app('byte ' + table_name + '[max_cost] = {' + contract_list + '};', 1)
 
     app()
+    # start the loop
     app('do', 1)
     for j in range(len(succ)):
+        # recieve value and path from j-th successor
         app('::  ' + get_pml_chan_name(succ[j], i) + ' ? v, p;', 1)
+        # x is the cost the contract prescribes
         app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
         app('if', 2)
-        app('::  (x < current_min);', 2)
-        # TODO: update path
-        if succ[j] != 0:
-            for k in succ:
-                if k != 0:
-                    app('if', 3)
-                    # TODO: replace true with that path is valid
-                    app('::  true;', 3)
-                    app(get_pml_chan_name(i, k) + ' ! x, p', 4)
-                    app('fi', 3)
+        # check if path is valid
+        #app('::  ((x < current_min) && (p.length < num_nodes - 3));', 2)
+        condition = [str(i-1) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
+        condition = ') && ('.join(condition)
+        app('::  ((x < current_min) && (p.length < num_nodes - 3) && (' + condition + '));', 2)
+        # update path
+        app('p.length = p.length + 1;', 3)
+        app('p.nodes[p.length - 1] = ' + str(i-1) + ';', 3)
+        #app('p_old = p;', 3)
         app('current_min = x;', 3)
-        if succ[j] == 0:
-            # if succ[j] is t then the path will always be valid
-            for k in succ:
-                if k != 0:
-                    app(get_pml_chan_name(i,k) + ' ! x, p;', 3)
+        for k in succ:
+            if k != 0:
+                app(get_pml_chan_name(i, k) + ' ! x, p', 3)
         app('::  else -> true', 2)
         app('fi', 2)
     app('od', 1)
     app('}')
-
-def app_n_proctype_old(i: int) -> None:
-    app('active proctype ' + get_pml_node_name(i) + '() {')
-    var_e = 'e' + str(i-1)
-    app(tab() + 'byte ' + var_e + ' = max_cost;')
-    app(tab() + 'byte x = 0;')
-    succ = g.get_successors(i) # list of successors
-    pred = g.get_predecessors(i) # list of predecessors
-    
-    #I'm not sure this should be initialized as max_cost...
-    # I think this could be done like this (which means setting each value of cost[] as max_cost):
-    #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
-    app(tab() + 'byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};')
-    
-    # load the contract table between node i and succ[j]
-    for j in range(len(succ)):
-        if succ[j] != 0:
-            table_name = 'cont' + get_pml_node_name(i) + get_pml_node_name(succ[j])
-            contract_table = g.get_contract_table(i,succ[j])
-            contract_list = ', '.join(map(str, contract_table))
-            app(tab() + 'byte ' + table_name + '[max_cost] = {' + contract_list + '};')
-    contract_values = table_name
-
-    app()
-    app(tab() + 'do')
-    for j in range(len(succ)):
-        array_element = 'cost[' + str(j) + ']'
-        app(tab(2) + ':: ' + get_pml_chan_name(i,succ[j]) + '?x;') # sets x as the message written from the channel between i and its j-successor
-        #app(tab(2) + 'if')        
-        #app(tab(3) + ':: ' + array_element + ' > x -> ') 
-        if succ[j] != 0:            
-            #I'm not sure about this...
-            app(tab(3) + 'if')
-            app(tab(4) + ':: ' + contract_values +'[x] < cost[' + str(succ[j]-1) + '];')
-            app(tab(4) + 'if')
-            app(tab(5) + 'path is valid -> cost[' + str(succ[j]-1) + '] = ' + contract_values +'[x]') 
-            app(tab(4) + 'fi')
-            app(tab(3) + 'fi')
-        app(tab(3) + 'if')
-        array_element = 'v[' + str(j) + ']'
-        app(tab(4) + ':: x < ' + array_element + ' -> ' + array_element + ' = ' + var_e + ';')
-        app(tab(5) + 'if')
-        app(tab(6) + ':: x < ' + var_e + ' -> ' + var_e + ' = x;')
-        for k in pred:
-            if k != 0: # if k is not the target
-                app(tab(7) + get_pml_chan_name(i,k) + '!' + var_e + ';') # advertises its minimum cost
-        app(tab(5) + 'fi')
-        app(tab(3) + 'fi')
-    app(tab() + 'od')
-    app('}')
-
-
-
-
-# given the list name, append a procedure to return the minimum value of that list
-# this operation should probably be done atomically... but I'm not sure
-def app_get_minimum_proc(chanName, list: str) -> None:
-    minValue = 'min' + chanName
-    iterator = 'i' + chanName
-    app(tab() + 'byte ' + minValue +' = max_cost;')
-    app(tab() + 'int ' + iterator + ';')
-    app(tab() + 'for('+ iterator + ' in ' + list + '){')
-    app(tab(2) + 'if')
-    app(tab(3) + ':: ' + minValue + ' > ' + list + '[' + iterator +'] -> ' + minValue + ' = ' + list + '[' + iterator + '];')
-    app(tab(2) + 'fi')
-    app(tab() + '}')
-
-
 
 # init
 def main(arg: list = []) -> None:
