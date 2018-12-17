@@ -290,13 +290,15 @@ def app_n_proctype(i: int) -> None:
     app('path p;', 1)
 
     succ = g.get_successors(i) # list of successors
-    pred = g.get_predecessors(i) # list of predecessors
+    #pred = g.get_predecessors(i) # list of predecessors
     
     #I'm not sure this should be initialized as max_cost...
     # I think this could be done like this (which means setting each value of cost[] as max_cost):
     #app(tab() + 'byte cost[' + str(len(succ)) + '] = max_cost;') 
     #app('byte cost[' + str(len(succ)) + '] = {' + ', '.join(['max_cost' for j in succ]) + '};', 1)
     
+    # TODO: EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
+
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
         table_name = 'cont_' + get_pml_node_name(succ[j])
