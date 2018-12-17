@@ -174,7 +174,7 @@ class Graph:
             # empty adjacency matrix
             self.ad_mat = [[0 for x in range(self.nodes)] for x in range(self.nodes)]
 
-            # begin by linking the target to some random node
+            # begin by linking some random node to target
             i = random.randrange(1, self.nodes)
             self.ad_mat[i][0] = 1
             n_edges -= 1 
