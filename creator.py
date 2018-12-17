@@ -10,6 +10,7 @@ file_list = []
 max_nodes = 6
 min_nodes = 4
 
+
 # the graph
 g = None
 
@@ -165,18 +166,43 @@ class Graph:
             self.ad_mat = [[0,0,0],[1,0,1], [1,1,0]]
         else:
             # create a random graph
-            self.nodes = random.randrange(min_nodes, max_nodes)
+            self.nodes = random.randrange(min_nodes, max_nodes) #define the number of nodes
+            n_edges = random.randrange(self.nodes-1, (self.nodes-1)*(self.nodes-1)) #define the number of edges 
+            #print("n_nodes: {}".format(self.nodes))
+            #print("n_edges: {}".format(n_edges))
 
             # empty adjacency matrix
             self.ad_mat = [[0 for x in range(self.nodes)] for x in range(self.nodes)]
-            
-            # fill the ad_mat
-            for i in range(self.nodes):
-                for j in range(self.nodes):
-                    if i != j and i != 0:
-                        self.ad_mat[i][j] = random.randrange(2)
-                    else:
-                        self.ad_mat[i][j] = 0
+
+            # begin by linking the target to some random node
+            i = random.randrange(1, self.nodes)
+            self.ad_mat[i][0] = 1
+            n_edges -= 1 
+
+            # fill the graph with n_edges
+            while n_edges != 0:
+            	# choose a random source node for the edge
+            	i = random.randrange(self.nodes)
+            	# there should only be out edges from target, so if i is the target, we should find some other node to be the source of the edge we're adding
+            	while i == 0 or sum(self.ad_mat[i]) == (self.nodes-1):
+            		i = random.randrange(self.nodes) 
+            	# choose a random target node for the edge
+            	j = random.randrange(self.nodes)
+            	# make sure that i and j are different nodes and that there is no edge from i to j already
+            	while i == j or self.exists_edge(i,j): 
+            		j = random.randrange(self.nodes)
+            	# add the edge between i and j
+            	self.ad_mat[i][j] = 1
+            	n_edges -= 1
+
+            # # fill the ad_mat
+            # for i in range(self.nodes):
+            #     for j in range(self.nodes):
+            #         if i != j and i != 0:
+            #             self.ad_mat[i][j] = random.randrange(2)
+
+                    # else:
+                    #     self.ad_mat[i][j] = 0 
 
         # transposed adjacency matrix
         self.trans_ad_mat = [[0 for x in range(self.nodes)] for x in range(self.nodes)]
@@ -189,8 +215,8 @@ class Graph:
 
         #self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
-        #self.write_graph_file('graph.txt') 
-        #self.write_graph_file('graph_transposed.txt', True)
+        self.write_graph_file('graph.txt') 
+        self.write_graph_file('graph_transposed.txt', True)
 
 # helpers
 def get_pml_node_name(i: int) -> str:
