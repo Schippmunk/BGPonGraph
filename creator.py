@@ -8,7 +8,7 @@ file_list = []
 
 # random graph vars
 max_nodes = 6
-min_nodes = 5
+min_nodes = 4
 
 # the graph
 g = None
@@ -107,7 +107,6 @@ class Graph:
                     node_contract_table.append(list_of_values)
 
             self.contract_table.append(node_contract_table) 
-        print(self.contract_table)
 
 
     def print_graph(self, transpose: bool = False, view_img: bool = True) -> None:
@@ -188,10 +187,10 @@ class Graph:
         # generate a random contract table with values in Z_max_cost
         self.generate_random_contract_table()
 
-        self.print_graph(False, False)  # Transposed = False, view = False
+        #self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
-        self.write_graph_file('graph.txt') 
-        self.write_graph_file('graph_transposed.txt', True)
+        #self.write_graph_file('graph.txt') 
+        #self.write_graph_file('graph_transposed.txt', True)
 
 # helpers
 def get_pml_node_name(i: int) -> str:
@@ -289,8 +288,6 @@ def app_n_proctype(i: int) -> None:
     app('byte v;', 1)
     # p is a variable of type path, also retreived from channels, modified and sent
     app('path p;', 1)
-    # p_old is the previously selected path that works
-    #app('path p_old;', 1)
     # the current minimum value this node has to offer to the other nodes
     app('byte current_min = max_cost;', 1)
 
@@ -319,14 +316,13 @@ def app_n_proctype(i: int) -> None:
             app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
         app('if', 2)
         # check if path is valid
-        #app('::  ((x < current_min) && (p.length < num_nodes - 3));', 2)
         condition = [str(i-1) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
         condition = ') && ('.join(condition)
         app('::  ((x < current_min) && (p.length < num_nodes - 3) && (' + condition + '));', 2)
         # update path
         app('p.length = p.length + 1;', 3)
         app('p.nodes[p.length - 1] = ' + str(i-1) + ';', 3)
-        #app('p_old = p;', 3)
+        # update minimum
         app('current_min = x;', 3)
         for k in pred:
             if k != 0:
