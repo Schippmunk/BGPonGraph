@@ -188,7 +188,7 @@ class Graph:
         # generate a random contract table with values in Z_max_cost
         self.generate_random_contract_table()
 
-        #self.print_graph(False, False)  # Transposed = False, view = False
+        self.print_graph(False, False)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
         self.write_graph_file('graph.txt') 
         self.write_graph_file('graph_transposed.txt', True)
@@ -291,20 +291,20 @@ def app_n_proctype(i: int) -> None:
     app('path p;', 1)
     # p_old is the previously selected path that works
     #app('path p_old;', 1)
-
     # the current minimum value this node has to offer to the other nodes
     app('byte current_min = max_cost;', 1)
-    
-    succ = g.get_successors(i) # list of successors
-    
-    # EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
+
+    # get neighbours
+    succ = g.get_successors(i)
+    pred = g.get_predecessors(i)
 
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
-        table_name = 'cont_' + get_pml_node_name(succ[j])
-        contract_table = g.get_contract_table(i,succ[j])
-        contract_list = ', '.join(map(str, contract_table))
-        app('byte ' + table_name + '[max_cost] = {' + contract_list + '};', 1)
+        if succ[j] != 0:
+            table_name = 'cont_' + get_pml_node_name(succ[j])
+            contract_table = g.get_contract_table(i,succ[j])
+            contract_list = ', '.join(map(str, contract_table))
+            app('byte ' + table_name + '[max_cost] = {' + contract_list + '};', 1)
 
     app()
     # start the loop
@@ -313,7 +313,10 @@ def app_n_proctype(i: int) -> None:
         # recieve value and path from j-th successor
         app('::  ' + get_pml_chan_name(succ[j], i) + ' ? v, p;', 1)
         # x is the cost the contract prescribes
-        app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
+        if succ[j] == 0:
+            app('x = v;', 2)
+        else:
+            app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
         app('if', 2)
         # check if path is valid
         #app('::  ((x < current_min) && (p.length < num_nodes - 3));', 2)
@@ -325,8 +328,9 @@ def app_n_proctype(i: int) -> None:
         app('p.nodes[p.length - 1] = ' + str(i-1) + ';', 3)
         #app('p_old = p;', 3)
         app('current_min = x;', 3)
-        for k in succ:
+        for k in pred:
             if k != 0:
+                # EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
                 app(get_pml_chan_name(i, k) + ' ! x, p', 3)
         app('::  else -> true', 2)
         app('fi', 2)
@@ -336,7 +340,6 @@ def app_n_proctype(i: int) -> None:
 # init
 def main(arg: list = []) -> None:
     global g
-    print(arg)
     if len(arg) == 2:
         g = Graph(int(arg[1]))
     else:
