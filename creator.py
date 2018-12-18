@@ -245,7 +245,7 @@ class Graph:
         	# generate a random contract table with values in Z_max_cost
        		self.generate_random_contract_table()
 
-        self.print_graph(False, True)  # Transposed = False, view = False
+        #self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
 
         self.write_graph_file('generated_graph.txt') 
@@ -313,7 +313,7 @@ def app_path() -> None:
     app('byte cost = max_cost;', 1)
     app('byte length = 0;', 1)
     num = g.nodes - 2
-    app('byte nodes[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}', 1)
+    app('byte nodes[' + str(num) + '] = {' + ', '.join(['num_nodes' for i in range(num)]) + '}', 1)
     app('}')
 
 # add a channel for each edge
@@ -385,7 +385,7 @@ def app_n_proctype(i: int) -> None:
         else:
             app('x = cont_' + get_pml_node_name(succ[j]) + '[p.cost];', 2)
         app('if', 2)
-        app('::  (x < paths[cmi].cost);', 2)
+        app('::  (x <= paths[cmi].cost);', 2)
         app('if', 3)
         # check if path is valid
         condition = [get_pml_node_index(i) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
@@ -399,7 +399,23 @@ def app_n_proctype(i: int) -> None:
         for k in range(g.nodes - 2):
             app('paths[cmi].nodes[' + str(k) + '] = p.nodes[' + str(k) + '];', 4)
         app('paths[cmi].nodes[p.length] = ' + get_pml_node_index(i) + ';', 4)
-        app('::  else -> true', 3) # instead of true select previous min path and send it
+        app('::  else;', 3)
+        # forget about this path.
+        app('paths[' + str(j) + '].cost = max_cost;', 4)
+        app('paths[' + str(j) + '].length = 0;', 4)
+        for k in range(g.nodes - 2):
+            app('paths[' + str(j) + '].nodes[' + str(k) + '] = num_nodes;', 4)
+        # find new cmi
+        app('x = 0;', 4)
+        app('do', 4)
+        app('::  (x < ' + str(len(succ)) + ');', 4)
+        app('if', 5)
+        app('::  (paths[x].cost < paths[cmi].cost) -> cmi = x;', 5)
+        app('::  else -> true;', 5)
+        app('fi;', 5)
+        app('x = x + 1;', 5)
+        app('::  (x >= ' + str(len(succ)) + ') -> break', 4)
+        app('od', 4)
         app('fi', 3)
         # SEND THE PATH THAT IT USES TO GET THE MINIMUM COST
         app('if', 3)
@@ -407,7 +423,8 @@ def app_n_proctype(i: int) -> None:
         for k in pred:
             if k != 0:
                 app(get_pml_chan_name(i, k) + ' ! paths[cmi]', 4)
-        app('::  else -> true', 3)
+        app('::  else -> true;', 3)
+        
         app('fi', 3)
         app('::  else -> true', 2)
         app('fi', 2)
