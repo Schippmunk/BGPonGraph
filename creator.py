@@ -183,6 +183,9 @@ class Graph:
             # this was the standard model we discussed
             self.nodes = 4
             self.ad_mat = [[0,0,0,0],[1,0,1,0],[1,0,0,1],[1,1,0,0]]
+            self.contract_table = [[1, 1, 1], [[0, 0]], [[0, 0]], [[0, 0]]]
+            self.max_cost = 2
+            self.random_contract_table = False
         elif number == 3+1:
             # another example discussed in the lab
             self.nodes = 3
@@ -238,10 +241,9 @@ class Graph:
                 self.trans_ad_mat[j][i] = self.ad_mat[i][j]
 
 
-        if self.generate_random_contract_table:
+        if self.random_contract_table:
         	# generate a random contract table with values in Z_max_cost
        		self.generate_random_contract_table()
-       	
 
         self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
@@ -251,19 +253,25 @@ class Graph:
         #self.write_contract_table_file('generated_contract_table.txt')
 
 # helpers
+def get_pml_node_index(i: int) -> str:
+    if i == 0:
+        return '0'
+    else:
+        return str(i)
+
 def get_pml_node_name(i: int) -> str:
     """Maps node index from our graph representation to pml naming"""
     if i == 0:
         return 't'
     else:
-        return 'n' + str(i-1)
+        return 'n' + get_pml_node_index(i)
 
 def get_pml_chan_name(i: int, j: int = 0) -> str:
     """given two node indices, returns the name of the communication channel between them"""
     if i == 0:
-        return 't' + str(j-1)
+        return 't' + get_pml_node_index(j)
     elif j == 0:
-        return 't' + str(i-1)
+        return 't' + get_pml_node_index(i)
     else:
         # maybe this has to be
         # return 'c' + str(j-1) + str(i-1)
@@ -302,9 +310,10 @@ def app_constants() -> None:
 
 def app_path() -> None:
     app('typedef path {')
-    app(tab() + 'byte length = 0;')
+    app('byte cost = max_cost;', 1)
+    app('byte length = 0;', 1)
     num = g.nodes - 2
-    app(tab() + 'byte nodes[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}')
+    app('byte nodes[' + str(num) + '] = {' + ', '.join([str(g.nodes) for i in range(num)]) + '}', 1)
     app('}')
 
 # add a channel for each edge
@@ -313,7 +322,7 @@ def app_channels() -> None:
         for j in range(g.nodes):
             edge = g.ad_mat[i][j]
             if edge == 1:
-                app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {byte, path}')
+                app('chan ' + get_pml_chan_name(j,i) + ' = [1] of {path}')
 
 def app_ltl_spec() -> None:
     """Specifies ltl property that eventually always all channels are empty"""
@@ -333,25 +342,26 @@ def app_t_proctype() -> None:
     app('active proctype t() {')
     for i in g.get_predecessors(0):
         value = g.get_contract_table(0, i)
-        path_name = 'p' + str(i-1)  
+        path_name = 'p' + get_pml_node_index(i)  
         app('path ' + path_name + ';', 1)
-        app(get_pml_chan_name(i) + ' ! ' + str(value) + ', ' + path_name + ';', 1)
+        app(path_name + '.cost = ' + str(value) + ';', 1)
+        app(get_pml_chan_name(i) + ' ! ' + path_name + ';', 1)
     app('}')
 
 def app_n_proctype(i: int) -> None:
-    app('active proctype ' + get_pml_node_name(i) + '() {')
-    # x is a variable used for computations
-    app('byte x;', 1)
-    # v is the value retrieved from channels
-    app('byte v;', 1)
-    # p is a variable of type path, also retreived from channels, modified and sent
-    app('path p;', 1)
-    # the current minimum value this node has to offer to the other nodes
-    app('byte current_min = max_cost;', 1)
-
     # get neighbours
     succ = g.get_successors(i)
     pred = g.get_predecessors(i)
+
+    app('active proctype ' + get_pml_node_name(i) + '() {')
+    # x is a variable used for computations
+    app('byte x;', 1)
+    # p is a variable of type path, also retreived from channels, modified and sent
+    app('path p;', 1)
+    # list of all paths of outgoing edges
+    app('path paths[' + str(len(succ) + 1) + '];', 1)
+    # current minimum index
+    app('byte cmi = ' + str(len(succ)) + ';', 1)
 
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
@@ -363,32 +373,47 @@ def app_n_proctype(i: int) -> None:
 
     app()
     # start the loop
-    app('do', 1)
+    if len(succ) > 0:
+        app('do', 1)
+
     for j in range(len(succ)):
         # recieve value and path from j-th successor
-        app('::  ' + get_pml_chan_name(succ[j], i) + ' ? v, p;', 1)
+        app('::  ' + get_pml_chan_name(succ[j], i) + ' ? p;', 1)
         # x is the cost the contract prescribes
         if succ[j] == 0:
-            app('x = v;', 2)
+            app('x = p.cost;', 2)
         else:
-            app('x = cont_' + get_pml_node_name(succ[j]) + '[v];', 2)
+            app('x = cont_' + get_pml_node_name(succ[j]) + '[p.cost];', 2)
         app('if', 2)
+        app('::  (x < paths[cmi].cost);', 2)
+        app('if', 3)
         # check if path is valid
-        condition = [str(i-1) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
+        condition = [get_pml_node_index(i) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
         condition = ') && ('.join(condition)
-        app('::  ((x < current_min) && (p.length < num_nodes - 3) && (' + condition + '));', 2)
+        app('::  ((p.length < num_nodes - 2) && (' + condition + '));', 3)
         # update path
-        app('p.length = p.length + 1;', 3)
-        app('p.nodes[p.length - 1] = ' + str(i-1) + ';', 3)
-        # update minimum
-        app('current_min = x;', 3)
+        app('cmi = ' + str(j) + ';', 4)
+        # this is effectively paths[cmi] = p but promela does not support assignments of whole types
+        app('paths[cmi].cost = x;', 4)
+        app('paths[cmi].length = p.length + 1;', 4)
+        for k in range(g.nodes - 2):
+            app('paths[cmi].nodes[' + str(k) + '] = p.nodes[' + str(k) + '];', 4)
+        app('paths[cmi].nodes[p.length] = ' + get_pml_node_index(i) + ';', 4)
+        app('::  else -> true', 3) # instead of true select previous min path and send it
+        app('fi', 3)
+        # SEND THE PATH THAT IT USES TO GET THE MINIMUM COST
+        app('if', 3)
+        app('::  (cmi != ' + str(len(succ)) + ');', 3)
         for k in pred:
             if k != 0:
-                # EACH NODE SENDS THE PATH THAT IT USES TO GET THE MINIMUM COST
-                app(get_pml_chan_name(i, k) + ' ! x, p', 3)
+                app(get_pml_chan_name(i, k) + ' ! paths[cmi]', 4)
+        app('::  else -> true', 3)
+        app('fi', 3)
         app('::  else -> true', 2)
         app('fi', 2)
-    app('od', 1)
+
+    if len(succ) > 0:
+        app('od', 1)
     app('}')
 
 # init
