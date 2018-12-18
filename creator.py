@@ -243,7 +243,7 @@ class Graph:
        		self.generate_random_contract_table()
        	
 
-        #self.print_graph(False, True)  # Transposed = False, view = False
+        self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
 
         self.write_graph_file('generated_graph.txt') 
