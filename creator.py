@@ -190,6 +190,8 @@ class Graph:
             # another example discussed in the lab
             self.nodes = 3
             self.ad_mat = [[0,0,0],[1,0,1], [1,1,0]]
+            self.contract_table = [[1,1], [[0, 0]], [[0, 0]]]
+            self.random_contract_table = False
         elif number == 0:
         	self.read_graph_from_file()
         	#self.read_contract_table_from_file()
@@ -245,7 +247,7 @@ class Graph:
         	# generate a random contract table with values in Z_max_cost
        		self.generate_random_contract_table()
 
-        self.print_graph(False, True)  # Transposed = False, view = False
+        #self.print_graph(False, True)  # Transposed = False, view = False
         #self.print_graph(True, False)   # Transposed = True, view = False
 
         self.write_graph_file('generated_graph.txt') 
