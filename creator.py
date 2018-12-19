@@ -7,8 +7,8 @@ file_list = []
 # program vars
 
 # random graph vars
-max_nodes = 6
-min_nodes = 4
+max_nodes = 11
+min_nodes = 10
 
 
 # the graph
@@ -365,6 +365,8 @@ def app_n_proctype(i: int) -> None:
     succ = g.get_successors(i)
     pred = g.get_predecessors(i)
 
+    if len(succ) == 0:
+        return
     app('active proctype ' + get_pml_node_name(i) + '() {')
     # x is a variable used for computations
     app('byte x;', 1)
@@ -436,7 +438,7 @@ def app_n_proctype(i: int) -> None:
         #app('fi', 3)
         # SEND THE PATH THAT IT USES TO GET THE MINIMUM COST
         app('if', 2)
-        app('::  (cmi_old != cmi && min < min_old) || (cmi_old == cmi && (min < min_old || (min >= min_old && cmi_old == ' + str(j) + ')));', 2)
+        app('::  (cmi_old != cmi && min != min_old) || (cmi_old == cmi && (min < min_old || (min >= min_old && cmi_old == ' + str(j) + ')));', 2)
         app('min_old = min;', 3)
         app('cmi_old = cmi;', 3)
         for k in pred:
