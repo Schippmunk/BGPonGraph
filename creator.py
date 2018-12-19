@@ -428,7 +428,7 @@ def app_n_proctype(i: int) -> None:
         app('::  (x < ' + str(len(succ)) + ');', 2)
         app('if', 3)
         app('::  (paths[x].cost < min) -> cmi = x; min = paths[x].cost', 3)
-        app('::  else -> true;', 3)
+        app('::  else', 3)
         app('fi;', 3)
         app('x = x + 1;', 3)
         app('::  (x >= ' + str(len(succ)) + ') -> break', 2)
@@ -442,7 +442,7 @@ def app_n_proctype(i: int) -> None:
         for k in pred:
             if k != 0:
                 app(get_pml_chan_name(i, k) + ' ! paths[cmi]', 3)
-        app('::  else -> true;', 2)
+        app('::  else', 2)
         app('fi', 2)
 
     if len(succ) > 0:
