@@ -437,7 +437,7 @@ def app_n_proctype(i: int) -> None:
         # this is effectively paths[cmi] = p but promela does not support assignments of whole types
         app('paths[' + str(j) + '].cost = x;', 3)
         app('paths[' + str(j) + '].length = p.length + 1;', 3)
-        for k in range(g.nodes - 2):
+        for k in range(g.nodes - 1):
             app('paths[' + str(j) + '].nodes[' +
                 str(k) + '] = p.nodes[' + str(k) + '];', 3)
         app('paths[' + str(j) + '].nodes[p.length] = ' +
@@ -446,7 +446,7 @@ def app_n_proctype(i: int) -> None:
         # path is invalid, so reset the path table for that neighbour
         app('paths[' + str(j) + '].cost = max_cost;', 3)
         app('paths[' + str(j) + '].length = 0;', 3)
-        for k in range(g.nodes - 2):
+        for k in range(g.nodes - 1):
             app('paths[' + str(j) + '].nodes[' + str(k) + '] = num_nodes;', 3)
         app('fi', 2)
         # find new cmi and min

@@ -48,12 +48,14 @@ active proctype n1() {
             paths[0].length = p.length + 1;
             paths[0].nodes[0] = p.nodes[0];
             paths[0].nodes[1] = p.nodes[1];
+            paths[0].nodes[2] = p.nodes[2];
             paths[0].nodes[p.length] = 1;
         ::  else;
             paths[0].cost = max_cost;
             paths[0].length = 0;
             paths[0].nodes[0] = num_nodes;
             paths[0].nodes[1] = num_nodes;
+            paths[0].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
@@ -81,12 +83,14 @@ active proctype n1() {
             paths[1].length = p.length + 1;
             paths[1].nodes[0] = p.nodes[0];
             paths[1].nodes[1] = p.nodes[1];
+            paths[1].nodes[2] = p.nodes[2];
             paths[1].nodes[p.length] = 1;
         ::  else;
             paths[1].cost = max_cost;
             paths[1].length = 0;
             paths[1].nodes[0] = num_nodes;
             paths[1].nodes[1] = num_nodes;
+            paths[1].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
@@ -128,12 +132,14 @@ active proctype n2() {
             paths[0].length = p.length + 1;
             paths[0].nodes[0] = p.nodes[0];
             paths[0].nodes[1] = p.nodes[1];
+            paths[0].nodes[2] = p.nodes[2];
             paths[0].nodes[p.length] = 2;
         ::  else;
             paths[0].cost = max_cost;
             paths[0].length = 0;
             paths[0].nodes[0] = num_nodes;
             paths[0].nodes[1] = num_nodes;
+            paths[0].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
@@ -161,12 +167,14 @@ active proctype n2() {
             paths[1].length = p.length + 1;
             paths[1].nodes[0] = p.nodes[0];
             paths[1].nodes[1] = p.nodes[1];
+            paths[1].nodes[2] = p.nodes[2];
             paths[1].nodes[p.length] = 2;
         ::  else;
             paths[1].cost = max_cost;
             paths[1].length = 0;
             paths[1].nodes[0] = num_nodes;
             paths[1].nodes[1] = num_nodes;
+            paths[1].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
@@ -208,12 +216,14 @@ active proctype n3() {
             paths[0].length = p.length + 1;
             paths[0].nodes[0] = p.nodes[0];
             paths[0].nodes[1] = p.nodes[1];
+            paths[0].nodes[2] = p.nodes[2];
             paths[0].nodes[p.length] = 3;
         ::  else;
             paths[0].cost = max_cost;
             paths[0].length = 0;
             paths[0].nodes[0] = num_nodes;
             paths[0].nodes[1] = num_nodes;
+            paths[0].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
@@ -241,12 +251,14 @@ active proctype n3() {
             paths[1].length = p.length + 1;
             paths[1].nodes[0] = p.nodes[0];
             paths[1].nodes[1] = p.nodes[1];
+            paths[1].nodes[2] = p.nodes[2];
             paths[1].nodes[p.length] = 3;
         ::  else;
             paths[1].cost = max_cost;
             paths[1].length = 0;
             paths[1].nodes[0] = num_nodes;
             paths[1].nodes[1] = num_nodes;
+            paths[1].nodes[2] = num_nodes;
         fi
         x = 0;
         min = 255;
