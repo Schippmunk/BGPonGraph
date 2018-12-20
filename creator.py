@@ -179,8 +179,6 @@ class Graph:
 
     def __init__(self, number: int, num_nodes: int = 0):
         """Constructor. Passed numbers generate example graphs, no argument gives a random graph"""
-        print(number)
-        print(num_nodes)
         if number == 2:
             # this was the standard model we discussed
             self.nodes = 4
