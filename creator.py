@@ -159,7 +159,7 @@ class Graph:
                 dot.render('reverse_graph', view=view_img)
             else:
                 dot.render('graph', view=view_img)
-        except ModuleNotFoundError:
+        except:
             pass
 
     def write_graph_file(self, file_name, transposed: bool = False):
