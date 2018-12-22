@@ -22,7 +22,7 @@ example_number can be:
 	2 of them linked to the root, whose channels have a cost of 1. The node1 (considering the root as node0)
 	has outdegree 2 and the contract table between the node and its neighbours is the identity, 
 	node2 has no outgoing edges besides the one linking to target, 
-	and node3 as an outgoing edge to some other node and the contract table between them is also the identity.
+	node3 has an outgoing edge to some other node and the contract table between them is also the identity.
 
     1, 2, ... for example graphs
         current example graphs:
