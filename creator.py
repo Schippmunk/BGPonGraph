@@ -159,14 +159,12 @@ class Graph:
         while(contents[-1] != '}'):
             contents.pop()
         contents.pop() # remove the outer }
-
         # dummy parsing...
         previous_c = ''
         nested = False
         for c in contents:
             if c == '{':
                 nested = ((not nested) and (previous_c == '{')) or (nested and (previous_c == '}'))
-
                 if nested:
                     nested_row = []
                 else:
@@ -470,17 +468,17 @@ def app_n_proctype(i: int) -> None:
 
     app('active proctype ' + get_pml_node_name(i) + '() {')
     # x is a variable used for computations
-    app('byte x;', 1)
+    app('byte x;    /*received cost (given in the path struct)*/', 1)
     # p is a variable of type path, also retreived from channels, modified and sent
-    app('path p;', 1)
+    app('path p;    /*received path structure*/', 1)
     # list of all paths of outgoing edges
-    app('path paths[' + str(len(succ)) + '];', 1)
+    app('path paths[' + str(len(succ)) + ']; /*to store each received path structure*/', 1)
     # current minimum index
-    app('byte cmi = 255;', 1)
-    app('byte cmi_old = 255;', 1)
+    app('byte cmi = 255;    /*index of the minimum cost*/', 1)
+    app('byte cmi_old = 255;    /*old index of the minimum cost (previously advertised)*/', 1)
     # current minimum value
-    app('byte min_old = max_cost;', 1)
-    app('byte min;', 1)
+    app('byte min_old = max_cost;   /*old minimum cost (previously advertised)*/', 1)
+    app('byte min;  /*current minimum cost*/', 1)
 
     # load the contract table between node i and succ[j]
     for j in range(len(succ)):
@@ -503,7 +501,7 @@ def app_n_proctype(i: int) -> None:
             app('x = p.cost;', 2)
         else:
             app('x = cont_' + get_pml_node_name(succ[j]) + '[p.cost];', 2)
-        app('if', 2)
+        app('if     /*num_nodes-1: primary condition of a loopless path, and the index is not in the path*/', 2)
         # check if path is valid
         condition = [get_pml_node_index(
             i) + ' != p.nodes[' + str(k) + ']' for k in range(g.nodes - 2)]
@@ -549,7 +547,7 @@ def app_n_proctype(i: int) -> None:
         for k in pred:
             if k != 0:
                 # SEND THE PATH THAT IT USES TO GET THE MINIMUM COST
-                app(get_pml_chan_name(i, k) + ' ! paths[cmi]', 3)
+                app(get_pml_chan_name(i, k) + ' ! paths[cmi]    /*send info of the best path and cost*/', 3)
         app('::  else', 2)
         app('fi', 2)
     app('od', 1)
