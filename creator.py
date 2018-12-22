@@ -114,27 +114,83 @@ class Graph:
 
             self.contract_table.append(node_contract_table)
 
+    # def read_graph_from_file(self):
+    #     """Reads the graph from the file graph.txt and saves it in self.nodes and ad_mat"""
+    #     file = open("graph.txt", "r")
+    #     contents = file.read()
+    #     contents = list(contents)
+    #     adj_matrix_file = []
+    #     # remove the first and the last braces
+    #     contents.pop(0)
+    #     contents.pop()
+    #     # dummy parsing...
+    #     for c in contents:
+    #         if c == '{':
+    #             row = []
+    #         elif c == '}':
+    #             adj_matrix_file.append(row)
+    #         elif c == ',':
+    #             pass
+    #         else:
+    #             row.append(int(c))
+    #     self.nodes = len(adj_matrix_file[0])
+    #     self.ad_mat = adj_matrix_file
+
     def read_graph_from_file(self):
-        """Reads the graph from the file graph_adjMatrix.txt and saves it in self.nodes and ad_mat"""
-        file = open("graph_adjMatrix.txt", "r")
+        """Reads the graph from the file graph.txt and saves it in self.nodes and ad_mat"""
+        file_name = "graph.txt"
+        self.ad_mat = self.read_list_from_file(file_name)
+        self.nodes = len(self.ad_mat[0])
+
+    def read_contract_table_from_file(self):
+        """Reads the contract table from the file contract_table.txt corresponding to the graph read from file and saves it in self.contract_table"""
+        file_name = "contract_table.txt"
+        self.contract_table = self.read_list_from_file(file_name)
+
+
+    def read_list_from_file(self, file_name) -> list:
+        """dummy parsing of a list from file"""
+        file = open(file_name, "r")
         contents = file.read()
         contents = list(contents)
-        adj_matrix_file = []
-        # remove the first and the last braces
+        list_file = []
+        # remove the outer braces
         contents.pop(0)
-        contents.pop()
+        while(contents[-1] != '}'):
+            contents.pop()
+        contents.pop() # remove the outer }
+
         # dummy parsing...
+        previous_c = ''
+        nested = False
         for c in contents:
             if c == '{':
-                row = []
+                nested = ((not nested) and (previous_c == '{')) or (nested and (previous_c == '}'))
+
+                if nested:
+                    nested_row = []
+                else:
+                    row = []
+                #row = []            
             elif c == '}':
-                adj_matrix_file.append(row)
-            elif c == ',':
+                nested = nested and (previous_c != '}')
+                if nested:
+                    row.append(nested_row)
+                else:
+                    list_file.append(row)
+            elif c == ',' or c == ' ':
                 pass
             else:
-                row.append(int(c))
-        self.nodes = len(adj_matrix_file[0])
-        self.ad_mat = adj_matrix_file
+                if nested:
+                    nested_row.append(int(c))
+                else:
+                    row.append(int(c))
+                #row.append(int(c))
+            if c != ',' and c != ' ':
+                previous_c = c
+        return list_file
+
+
 
     def print_graph(self, transpose: bool = False, view_img: bool = True) -> None:
         """prints the graph pretty"""
@@ -177,6 +233,26 @@ class Graph:
             file.write("\n")
         file.close()
 
+    def write_contract_table_file(self, file_name):
+        file = open(file_name, "w+")
+        file.write("Contract Table\n")
+        file.write("[")
+        for l in self.contract_table:
+            file.write("[")
+            for i in l: 
+                if isinstance(i, list):
+                    file.write("[")
+                    for j in i:
+                        file.write(" {}".format(j))
+                    file.write("]")
+                else:
+                    file.write(" {}".format(i))
+            file.write("]")
+        file.write("]")
+        file.close()
+            
+
+
     def __init__(self, number: int, num_nodes: int = 0):
         """Constructor. Passed numbers generate example graphs, no argument gives a random graph"""
         if number == 2:
@@ -204,8 +280,8 @@ class Graph:
 
         elif number == 0:
             self.read_graph_from_file()
-            # self.read_contract_table_from_file()
-            #self.generate_random_contract_table = False
+            self.read_contract_table_from_file()
+            self.random_contract_table = False
         else:
             # create a random graph
             # define the number of nodes
@@ -258,7 +334,7 @@ class Graph:
 
         self.write_graph_file('generated_graph.txt')
         self.write_graph_file('generated_graph_transposed.txt', True)
-        # self.write_contract_table_file('generated_contract_table.txt')
+        self.write_contract_table_file('generated_contract_table.txt')
 
 
 # helpers
